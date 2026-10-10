@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { access, readFile } from 'node:fs/promises';
-import { constants } from 'node:fs';
+import { constants, existsSync } from 'node:fs';
+import { discoverPython, reportHealth } from './runtime.mjs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -10,9 +11,11 @@ const execFileAsync = promisify(execFile);
 const home = homedir();
 
 export function providerPaths(env = process.env) {
+  const roots=[env.ALI1688_PROVIDER_ROOT, join(home,'.1688cli/providers'), join(home,'.openclaw/workspace/skills'), join(home,'.sealseek/skills'),join(home,'.workbuddy/skills'),join(home,'.agents/skills'),join(env.CODEX_HOME||join(home,'.codex'),'skills')].filter(Boolean);
+  const locate=(name,override)=>override?resolve(override):roots.map(root=>join(root,name)).find(p=>existsSync(join(p,'cli.py')))||join(roots[0],name);
   return {
-    product: resolve(env.ALI1688_PRODUCT_SKILL_DIR || join(home, '.openclaw/workspace/skills/1688-product-find')),
-    supplier: resolve(env.ALI1688_SUPPLIER_SKILL_DIR || join(home, '.openclaw/workspace/skills/1688-source-suppliers')),
+    product: locate('1688-product-find',env.ALI1688_PRODUCT_SKILL_DIR),
+    supplier: locate('1688-source-suppliers',env.ALI1688_SUPPLIER_SKILL_DIR),
     akStore: resolve(env.ALI1688_AK_STORE || join(home, 'workspace/.1688-AK/.ak_store.json'))
   };
 }
@@ -41,7 +44,8 @@ export async function providerHealth(env = process.env) {
     product_skill: { available: await present(join(paths.product, 'cli.py')), version: await skillVersion(paths.product) },
     supplier_skill: { available: await present(join(paths.supplier, 'cli.py')), version: await skillVersion(paths.supplier) },
     ak: await akAvailable(env),
-    python: env.ALI1688_PYTHON || 'python3'
+    python: await discoverPython({env}),
+    report: await reportHealth(env)
   };
 }
 
@@ -57,9 +61,11 @@ export async function callOfficial(kind, command, args, options = {}) {
   try { await access(script, constants.R_OK); }
   catch { throw new CliError('PROVIDER_MISSING', `缺少官方 ${kind === 'supplier' ? '找供应商' : '找商品'} Skill，请先安装到其标准目录`, { kind }); }
 
+  const python=await discoverPython({env});
+  if(!python.available) throw new CliError('PYTHON_DEPENDENCY_MISSING','缺少可用 Python 3 或 requests、keyring、Pillow，请运行 doctor --json');
   let stdout;
   try {
-    ({ stdout } = await execFileAsync(env.ALI1688_PYTHON || 'python3', [script, command, ...args], {
+    ({ stdout } = await execFileAsync(python.command, [...python.args, script, command, ...args], {
       env: await childEnvironment(env), timeout: options.timeoutMs || 90_000, maxBuffer: 16 * 1024 * 1024,
       encoding: 'utf8'
     }));

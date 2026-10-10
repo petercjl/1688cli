@@ -9,7 +9,11 @@ description: Use 1688cli for high-coverage, read-only 1688 sourcing by keyword o
 
 把用户的商品需求转化为高覆盖、可追溯的 1688 搜索、唯一商品库、价格与商家初筛以及人工询价交接。商品查询只通过 `@petercjl/1688cli` 的稳定 CLI；Agent 负责观察结果、选择下一轮词或图、判断相关性。平台标价、销量、材质、工厂标签等是待核实的平台信息。询盘、消息、订单和付款由人执行。
 
-本 Skill 是包内唯一规范副本。Codex 与 SealSeek 的安装目录是受管理目标，业务方法只在此处维护。
+本 Skill 是包内唯一规范副本。Codex、SealSeek 与 WorkBuddy 的安装目录是受管理目标，业务方法只在此处维护。
+
+## 运行环境
+
+通过 `1688cli skill source --json` 定位当前包内规范 Skill，并从该目录解析资源。运行 `1688cli version --json`、`1688cli capabilities --json` 和 `1688cli doctor --json`。按宿主选择 `adapters/codex.json`、`adapters/sealseek.json` 或 `adapters/workbuddy.json`；使用当前宿主提供的终端、视觉和文件交付能力。安装与更新使用 `1688cli skill install|update --agent <agent>`，本地修改须先审阅，备份后才可覆盖。macOS 与 Windows 共用 CLI 契约，实际兼容性以包内验证记录为准。
 
 ## 输入与一级路由
 

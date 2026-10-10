@@ -1,3 +1,4 @@
+import { META, AGENTS } from './core.mjs';
 import { readFile, open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { capabilities } from './capabilities.mjs';
@@ -32,14 +33,14 @@ const usage = `1688cli — 1688 只读找货与供应商筛选
   1688cli capabilities [--json]
   1688cli doctor --json
   1688cli update [--check|--apply]
-  1688cli skill source|status|install|update [--agent codex|sealseek|all]
+  1688cli skill source|status|install|update [--agent codex|sealseek|workbuddy|all] [--mode link|copy] [--path DIR]
 
 查询结果默认输出 JSON 到 stdout。--output <新文件> 可保存 JSON；已有文件拒绝覆盖。`;
 
 const sortValues = new Set(['price_asc', 'price_desc', 'sold_desc', 'yx_desc']);
 const scoreValues = new Set(['high', 'medium', 'low']);
-const optionNames = new Set(['limit', 'sort', 'score-level', 'purchase-amount', 'tags', 'ic-tags', 'image', 'output', 'output-dir', 'tag-dir', 'context', 'max-price', 'max-moq', 'min-sold', 'location', 'relevance', 'category', 'supplier', 'agent']);
-const flags = new Set(['json', 'proofing', 'check', 'apply', 'help', 'version']);
+const optionNames = new Set(['limit', 'sort', 'score-level', 'purchase-amount', 'tags', 'ic-tags', 'image', 'output', 'output-dir', 'tag-dir', 'context', 'max-price', 'max-moq', 'min-sold', 'location', 'relevance', 'category', 'supplier', 'agent', 'path', 'mode']);
+const flags = new Set(['json', 'proofing', 'check', 'apply', 'help', 'version', 'force']);
 
 export function parseArgs(argv) {
   const positionals = [];
@@ -93,21 +94,26 @@ function productOptions(options) {
 
 async function runCommand(positionals, options) {
   const [group, action, input] = positionals;
-  if (group === 'version' || options.version) return { version: '0.2.0' };
+  if (group === 'version' || options.version) return { version: META.version };
   if (!group || group === 'help' || options.help) return { help: usage };
-  if (group === 'capabilities') return { ok: true, capabilities };
+  if (group === 'capabilities') return { ok: true, package: META.name, version: META.version, agents: AGENTS, operating_systems: ['darwin','win32'], capabilities, lifecycle: ['skill source','skill status','skill install','skill update','update check','update install'], dependencies: ['Python 3: requests, keyring, Pillow','official 1688-product-find','official 1688-source-suppliers','1688 AK','HTML only: compact-commerce-ui Skill and commerce-ui CLI'] };
   if (group === 'doctor') {
     const health = await providerHealth();
-    return { ok: health.product_skill.available && health.supplier_skill.available && health.ak.available, package: '@petercjl/1688cli', version: '0.2.0', read_only: true, ...health, skill: await skillStatus() };
+    return { report_ready: health.report.available, ok: health.product_skill.available && health.supplier_skill.available && health.ak.available && health.python.available, package: '@petercjl/1688cli', version: META.version, read_only: true, ...health, skill: await skillStatus() };
   }
-  if (group === 'update') return packageUpdate(Boolean(options.apply));
+  if (group === 'update') {
+    if(action && !['check','install'].includes(action)) throw new CliError('UNKNOWN_COMMAND','update 支持 check、install');
+    return packageUpdate(Boolean(options.apply || action==='install'));
+  }
   if (group === 'skill') {
     if (action === 'source') return { ok: true, source: skillSource() };
-    if (action === 'status') return { ok: true, ...(await skillStatus()) };
+    if (action === 'status') return { ok: true, ...(await skillStatus({agent:options.agent,path:options.path})) };
     if (!['install', 'update'].includes(action)) throw new CliError('UNKNOWN_COMMAND', 'skill 支持 source、status、install、update');
-    const agents = options.agent === 'all' ? ['codex', 'sealseek'] : [options.agent || 'codex'];
+    const agents = options.agent === 'all' ? AGENTS : [options.agent || 'codex'];
+    if(options.path && agents.length>1) throw new CliError('INVALID_INPUT','--path 须指定单个 Agent');
+    const opts={path:options.path,mode:options.mode,force:options.force};
     const results = [];
-    for (const agent of agents) results.push(action === 'install' ? await installSkill(agent) : await updateSkill(agent));
+    for (const agent of agents) results.push(action === 'install' ? await installSkill(agent,opts) : await updateSkill(agent,opts));
     return { ok: true, results };
   }
   if (group === 'products') {
