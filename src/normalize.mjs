@@ -23,6 +23,10 @@ export function normalizeProducts(payload, query, method) {
     supplier_member_id: row.member_id || '',
     sku_id: row.sku_id || '',
     sku_title: row.sku_title || '',
+    stock_amount: number(row.stock_amount),
+    promotion_tags: row.promotion_tags || [],
+    service_infos: row.service_infos || [],
+    selling_points: row.selling_points || [],
     source: { provider: '1688-official-skill', method, query, collected_at: new Date().toISOString() }
   }));
 }

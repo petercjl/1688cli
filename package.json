@@ -1,6 +1,6 @@
 {
   "name": "@petercjl/1688cli",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Read-only 1688 product and supplier sourcing for AI agents",
   "type": "module",
   "bin": {

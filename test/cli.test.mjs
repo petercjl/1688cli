@@ -14,12 +14,12 @@ test('capabilities registry is exposed as JSON', async () => {
   const code = await main(['capabilities', '--json'], { log: x => messages.push(x), error: x => messages.push(x) });
   assert.equal(code, 0);
   const result = JSON.parse(messages[0]);
-  assert.equal(result.capabilities.length, 10);
+  assert.equal(result.capabilities.length, 5);
   assert.equal(result.capabilities[0].access, 'read');
-  assert.ok(result.capabilities.some(item => item.id === 'research.collect'));
-  assert.ok(result.capabilities.some(item => item.id === 'research.visual-batches'));
-  assert.ok(result.capabilities.some(item => item.id === 'research.visual-materialize'));
-  assert.ok(result.capabilities.some(item => item.id === 'research.visual-compile'));
+
+
+
+
 });
 
 test('missing search input produces structured error', async () => {

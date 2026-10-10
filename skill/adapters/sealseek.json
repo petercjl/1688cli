@@ -6,97 +6,65 @@
     {
       "capability_id": "sourcing.product.text-search",
       "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli products search <query> --limit <n> --output <new-path>.json", "probe": "1688cli doctor --json; 1688cli capabilities --json"},
-      "features": ["read_only_platform_query", "utf8_keyword", "structured_json", "source_provenance"],
-      "permissions": ["terminal execution", "read configured official 1688 AK", "write a new JSON file"],
+      "implementation": {
+        "kind": "stable-cli",
+        "command": "1688cli products search <query> --limit <n> --output <new-path>.json",
+        "probe": "1688cli doctor --json; 1688cli capabilities --json"
+      },
+      "features": [
+        "read_only_platform_query",
+        "utf8_keyword",
+        "structured_json",
+        "source_provenance"
+      ],
+      "permissions": [
+        "terminal execution",
+        "read configured official 1688 AK",
+        "write a new JSON file"
+      ],
       "normalization": "Read JSON products[] and retain exact query, output path, and search ID. SealSeek runtime execution of this Skill is not yet verified."
     },
     {
       "capability_id": "sourcing.product.image-search",
       "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli products image <local-path-or-https-url> --limit <n> --output <new-path>.json", "probe": "1688cli doctor --json; 1688cli capabilities --json"},
-      "features": ["read_only_platform_query", "local_path_or_https_url", "one_image_per_call", "structured_json", "source_provenance"],
-      "permissions": ["terminal execution", "read task image or HTTPS URL", "read configured official 1688 AK", "write a new JSON file"],
+      "implementation": {
+        "kind": "stable-cli",
+        "command": "1688cli products image <local-path-or-https-url> --limit <n> --output <new-path>.json",
+        "probe": "1688cli doctor --json; 1688cli capabilities --json"
+      },
+      "features": [
+        "read_only_platform_query",
+        "local_path_or_https_url",
+        "one_image_per_call",
+        "structured_json",
+        "source_provenance"
+      ],
+      "permissions": [
+        "terminal execution",
+        "read task image or HTTPS URL",
+        "read configured official 1688 AK",
+        "write a new JSON file"
+      ],
       "normalization": "Associate each result with the originating reference ID; uploaded images without an accessible path require user input. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.visual.batch-prepare",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research visual-batches <inventory-or-result.json> --output <new-visual-batches.json>", "probe": "1688cli capabilities --json"},
-      "features": ["fixed_max_ten_images", "offer_id_image_pairing", "title_free_visual_input", "structured_json"],
-      "permissions": ["terminal execution", "read the complete task inventory", "write a new JSON file"],
-      "normalization": "Each batch contains at most ten offer_id/image_url items and no title or commercial fields. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.visual.materialize",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research visual-materialize <visual-batches.json> --output-dir <new-directory>", "probe": "1688cli capabilities --json"},
-      "features": ["network_read_only", "offer_id_local_path_pairing", "batch_directory", "structured_failures"],
-      "permissions": ["terminal execution", "read scoped HTTPS product images", "create one new local directory"],
-      "normalization": "Use materialized.json for per-offer local paths and download failures. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.image.inspect",
-      "status": "implemented",
-      "implementation": {"kind": "agent-native-vision", "discovery": "Use SealSeek's currently advertised vision capability to inspect every item in one batch concurrently, with at most ten offer_id/image_url pairs. Stop with CAPABILITY_UNAVAILABLE when the batch cannot be inspected without title input."},
-      "features": ["batch_up_to_ten", "concurrent_image_inspection", "per_offer_result", "candidate_image_review", "visible_evidence_only", "reference_pairing"],
-      "permissions": ["inspect only task images"],
-      "normalization": "Return one record per offer with subject, visual tags, visible evidence, confidence, and status; do not load titles or commercial fields before clustering. This mapping has not been runtime-tested in SealSeek."
-    },
-    {
-      "capability_id": "sourcing.result.collect",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research collect <search-manifest.json> --output <new-inventory.json>", "probe": "1688cli capabilities --json"},
-      "features": ["local_read_only", "offer_id_deduplication", "all_search_provenance", "sku_price_observations", "coverage_counts"],
-      "permissions": ["terminal execution", "read saved query JSON files", "write a new inventory JSON file"],
-      "normalization": "Use search_log and products unchanged as the complete source set for version 2 research results. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.visual.compile",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research visual-compile <visual-batches.json> --tag-dir <visual-tags> --output <new-catalog.json>", "probe": "1688cli capabilities --json"},
-      "features": ["complete_offer_coverage", "duplicate_rejection", "post_tag_clustering", "per_offer_cluster_id"],
-      "permissions": ["read task-local visual manifests and tags", "write one new catalog JSON"],
-      "normalization": "Reject missing or duplicate offers; preserve every per-image tag and assign one structural similarity cluster only after tagging."
-    },
-    {
-      "capability_id": "sourcing.result.build",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research build <inventory.json> --context <analysis.json> --output <new-sourcing-result.json>", "probe": "1688cli capabilities --json"},
-      "features": ["complete_inventory_preservation", "offer_id_keyed_judgments", "versioned_result", "contract_validation"],
-      "permissions": ["terminal execution", "read task inventory and analysis JSON files", "write a new sourcing result JSON file"],
-      "normalization": "Retain every inventory offer and apply judgments by offer ID. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.result.validate",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research validate <sourcing-result.json>", "probe": "1688cli --help"},
-      "features": ["local_read_only", "mode_specific_schema", "provenance_links", "structured_errors"],
-      "permissions": ["terminal execution", "read the task result JSON"],
-      "normalization": "Accept only ok:true; on OUTPUT_CONTRACT_FAILED inspect issues[] and repair the local artifact. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.report.viewmodel",
-      "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research viewmodel <sourcing-result.json> --output <new-viewmodel.json>", "probe": "1688cli --help"},
-      "features": ["validated_source_json", "category_or_reference_views", "https_product_images", "source_provenance", "versioned_viewmodel"],
-      "permissions": ["terminal execution", "read the task sourcing result", "write a new ViewModel JSON file"],
-      "normalization": "Produces compact-workbench@1.0 ViewModel with categorized product cards. SealSeek runtime execution is not yet verified."
-    },
-    {
-      "capability_id": "sourcing.report.html",
-      "status": "implemented",
-      "implementation": {"kind": "nested-skill-and-stable-cli", "skill": "compact-commerce-ui", "command": "commerce-ui render --input <viewmodel.json> --output <new-report.html>; commerce-ui validate <report.html>", "probe": "commerce-ui version --json; commerce-ui templates list --json; commerce-ui schema --template compact-workbench"},
-      "features": ["exact_nested_skill_resolution", "versioned_template_contract", "remote_https_product_images", "new_html_output", "html_validation"],
-      "permissions": ["resolve the current compact-commerce-ui Skill by exact name", "terminal execution", "write a new HTML report", "browser may load HTTPS product images when report is viewed"],
-      "normalization": "Accept only a validated compact-workbench@1.0 report. SealSeek runtime execution is not yet verified."
     },
     {
       "capability_id": "sourcing.supplier.search",
       "status": "implemented",
-      "implementation": {"kind": "stable-cli", "command": "1688cli suppliers search <query> --output <new-path>.json", "probe": "1688cli doctor --json"},
-      "features": ["read_only_platform_query", "structured_json", "source_provenance"],
-      "permissions": ["terminal execution", "read configured official 1688 AK", "write a new JSON file"],
+      "implementation": {
+        "kind": "stable-cli",
+        "command": "1688cli suppliers search <query> --output <new-path>.json",
+        "probe": "1688cli doctor --json"
+      },
+      "features": [
+        "read_only_platform_query",
+        "structured_json",
+        "source_provenance"
+      ],
+      "permissions": [
+        "terminal execution",
+        "read configured official 1688 AK",
+        "write a new JSON file"
+      ],
       "normalization": "Read suppliers[]; preserve direct identity evidence before relating a supplier to a product. SealSeek runtime execution is not yet verified."
     }
   ]

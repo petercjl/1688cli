@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { access, readFile } from 'node:fs/promises';
 import { constants, existsSync } from 'node:fs';
-import { discoverPython, reportHealth } from './runtime.mjs';
+import { discoverPython } from './runtime.mjs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -44,8 +44,7 @@ export async function providerHealth(env = process.env) {
     product_skill: { available: await present(join(paths.product, 'cli.py')), version: await skillVersion(paths.product) },
     supplier_skill: { available: await present(join(paths.supplier, 'cli.py')), version: await skillVersion(paths.supplier) },
     ak: await akAvailable(env),
-    python: await discoverPython({env}),
-    report: await reportHealth(env)
+    python: await discoverPython({env})
   };
 }
 

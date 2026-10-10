@@ -57,18 +57,3 @@ export async function nodeCli(name, packageName, relativeEntry, env=process.env)
     const entry=path.join(stdout.trim(),...packageName.split('/'),relativeEntry);await fs.access(entry);return entry;
   } catch {return null;}
 }
-export async function reportHealth(env=process.env) {
-  const entry=await nodeCli('commerce-ui','@petercjl/commerce-ui','bin/commerce-ui.mjs',env);
-  if(!entry) return {available:false,required_for:'html',code:'RENDERER_MISSING'};
-  try {
-    const run=async args=>JSON.parse((await execute(process.execPath,[entry,...args],{env,encoding:'utf8',timeout:15000,windowsHide:true})).stdout);
-    const version=await run(['version','--json']);
-    const schema=await run(['schema','--template','compact-workbench']);
-    const source=await run(['skill','source','--json']);
-    const base=source.source||source.path;
-    if(!base)throw new Error('No canonical Skill');
-    const text=await fs.readFile(path.join(base,'SKILL.md'),'utf8');
-    if(!/^name: compact-commerce-ui$/m.test(text)||schema.ok===false)throw new Error('Contract unavailable');
-    return {available:true,required_for:'html',version:version.version||null,skill_source:base,contract:'compact-workbench@1.0'};
-  } catch {return {available:false,required_for:'html',code:'RENDERER_CONTRACT_UNAVAILABLE'};}
-}

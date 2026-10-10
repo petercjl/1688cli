@@ -7,13 +7,6 @@ import { callOfficial, providerHealth } from './provider.mjs';
 import { normalizeProducts, normalizeSuppliers, screenRows } from './normalize.mjs';
 import { installSkill, skillSource, skillStatus, updateSkill } from './skill-manager.mjs';
 import { packageUpdate } from './updater.mjs';
-import { validateResearchResult } from './research-validator.mjs';
-import { toCommerceViewModel } from './research-viewmodel.mjs';
-import { collectResearch } from './research-collect.mjs';
-import { buildResearch } from './research-build.mjs';
-import { buildVisualBatches } from './visual-batches.mjs';
-import { materializeVisualBatches } from './visual-materialize.mjs';
-import { compileVisualTags } from './visual-tag-compile.mjs';
 
 const usage = `1688cli — 1688 只读找货与供应商筛选
 
@@ -23,13 +16,6 @@ const usage = `1688cli — 1688 只读找货与供应商筛选
   1688cli products link <商品链接> [--image 图片URL] [选项]
   1688cli suppliers search <关键词>
   1688cli screen <结果JSON> [--max-price N] [--max-moq N] [--relevance relevant,possible] [--category ID] [--supplier 名称或会员ID]
-  1688cli research validate <sourcing-result.json>
-  1688cli research collect <search-manifest.json> --output <new-inventory.json>
-  1688cli research build <inventory.json> --context <analysis.json> --output <new-sourcing-result.json>
-  1688cli research visual-batches <inventory-or-result.json> --output <new-visual-batches.json>
-  1688cli research visual-materialize <visual-batches.json> --output-dir <new-directory>
-  1688cli research visual-compile <visual-batches.json> --tag-dir <标签目录> --output <new-catalog.json>
-  1688cli research viewmodel <sourcing-result.json> --output <new-viewmodel.json>
   1688cli capabilities [--json]
   1688cli doctor --json
   1688cli update [--check|--apply]
@@ -96,10 +82,10 @@ async function runCommand(positionals, options) {
   const [group, action, input] = positionals;
   if (group === 'version' || options.version) return { version: META.version };
   if (!group || group === 'help' || options.help) return { help: usage };
-  if (group === 'capabilities') return { ok: true, package: META.name, version: META.version, agents: AGENTS, operating_systems: ['darwin','win32'], capabilities, lifecycle: ['skill source','skill status','skill install','skill update','update check','update install'], dependencies: ['Python 3: requests, keyring, Pillow','official 1688-product-find','official 1688-source-suppliers','1688 AK','HTML only: compact-commerce-ui Skill and commerce-ui CLI'] };
+  if (group === 'capabilities') return { ok: true, package: META.name, version: META.version, agents: AGENTS, operating_systems: ['darwin','win32'], contracts: {products:'1688-products@1',suppliers:'1688-suppliers@1'}, layer:'capability', capabilities, lifecycle: ['skill source','skill status','skill install','skill update','update check','update install'], dependencies: ['Python 3: requests, keyring, Pillow','official 1688-product-find','official 1688-source-suppliers','1688 AK'] };
   if (group === 'doctor') {
     const health = await providerHealth();
-    return { report_ready: health.report.available, ok: health.product_skill.available && health.supplier_skill.available && health.ak.available && health.python.available, package: '@petercjl/1688cli', version: META.version, read_only: true, ...health, skill: await skillStatus() };
+    return { ok: health.product_skill.available && health.supplier_skill.available && health.ak.available && health.python.available, package: '@petercjl/1688cli', version: META.version, read_only: true, ...health, skill: await skillStatus() };
   }
   if (group === 'update') {
     if(action && !['check','install'].includes(action)) throw new CliError('UNKNOWN_COMMAND','update 支持 check、install');
@@ -153,18 +139,7 @@ async function runCommand(positionals, options) {
     });
     return { ok: true, kind, input_count: rows.length, count: selected.length, [kind]: selected };
   }
-  if (group === 'research' && ['validate', 'viewmodel', 'collect', 'build', 'visual-batches', 'visual-materialize', 'visual-compile'].includes(action)) {
-    const path = resolve(required(input, '找货结果 JSON 文件'));
-    if (action === 'collect') return collectResearch(path);
-    if (action === 'build') return buildResearch(path, resolve(required(options.context, '判断 JSON 文件')));
-    if (action === 'visual-batches') return buildVisualBatches(path);
-    if (action === 'visual-materialize') return materializeVisualBatches(path, resolve(required(options['output-dir'], '新输出目录')));
-    if (action === 'visual-compile') return compileVisualTags(path, resolve(required(options['tag-dir'], '视觉标签目录')));
-    let data;
-    try { data = JSON.parse(await readFile(path, 'utf8')); }
-    catch { throw new CliError('INPUT_READ_FAILED', '无法读取找货结果 JSON 文件', { path }); }
-    return action === 'validate' ? { ...validateResearchResult(data), path } : toCommerceViewModel(data);
-  }
+  if (group === 'research') throw new CliError('APPLICATION_MOVED', '找货工作流现由 @petercjl/1688-product-sourcing 提供，请使用 1688-product-sourcing research', {package:'@petercjl/1688-product-sourcing'});
   throw new CliError('UNKNOWN_COMMAND', '未知命令；运行 1688cli help 查看用法');
 }
 
@@ -185,14 +160,7 @@ export async function main(argv, io = console) {
     const result = await runCommand(positionals, options);
     const output = result.help || JSON.stringify(result, null, 2);
     if (options.output) await saveNew(options.output, `${output}\n`);
-    const researchSaved = options.output && positionals[0] === 'research' && ['viewmodel', 'collect', 'build', 'visual-batches', 'visual-compile'].includes(positionals[1]);
-    const summary = researchSaved && positionals[1] === 'collect'
-      ? { ok: true, path: resolve(options.output), searches: result.search_log.length, products: result.products.length, coverage: result.coverage }
-      : researchSaved && positionals[1] === 'build' ? { ok: true, path: resolve(options.output), ...validateResearchResult(result) }
-      : researchSaved && positionals[1] === 'visual-batches' ? { ok: true, path: resolve(options.output), batch_size: result.batch_size, batches: result.batches.length, coverage: result.coverage }
-      : researchSaved && positionals[1] === 'visual-compile' ? { ok: true, path: resolve(options.output), clusters: result.clusters.length, coverage: result.coverage }
-      : researchSaved ? { ok: true, path: resolve(options.output), contract: result.contract, views: result.views.length } : null;
-    io.log(researchSaved ? JSON.stringify(summary, null, 2) : output);
+    io.log(output);
     return result.ok === false ? 1 : 0;
   } catch (error) {
     io.error(JSON.stringify(failure(error)));

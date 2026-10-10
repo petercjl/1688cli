@@ -6,120 +6,75 @@
     {
       "capability_id": "sourcing.product.text-search",
       "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli products search <query> --limit <n> --output <new-path>.json", "probe": "1688cli doctor --json; 1688cli capabilities --json"},
-      "features": ["read_only_platform_query", "utf8_keyword", "structured_json", "source_provenance"],
-      "permissions": ["read configured official 1688 AK", "write a new JSON file"],
+      "implementation": {
+        "kind": "stable-cli",
+        "command": "1688cli products search <query> --limit <n> --output <new-path>.json",
+        "probe": "1688cli doctor --json; 1688cli capabilities --json"
+      },
+      "features": [
+        "read_only_platform_query",
+        "utf8_keyword",
+        "structured_json",
+        "source_provenance"
+      ],
+      "permissions": [
+        "read configured official 1688 AK",
+        "write a new JSON file"
+      ],
       "normalization": "Read JSON products[] and retain each product source plus the explicit search ID in the research ledger.",
       "tested_date": "2026-09-28",
-      "evidence": ["On Codex/macOS, 1688cli products search 不粘平底锅 --limit 3 returned normalized product rows through the installed official Skill."]
+      "evidence": [
+        "On Codex/macOS, 1688cli products search 不粘平底锅 --limit 3 returned normalized product rows through the installed official Skill."
+      ]
     },
     {
       "capability_id": "sourcing.product.image-search",
       "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli products image <local-path-or-https-url> --limit <n> --output <new-path>.json", "probe": "1688cli doctor --json; 1688cli capabilities --json"},
-      "features": ["read_only_platform_query", "local_path_or_https_url", "one_image_per_call", "structured_json", "source_provenance"],
-      "permissions": ["read user image or 1688cli-returned image URL", "read configured official 1688 AK", "write a new JSON file"],
+      "implementation": {
+        "kind": "stable-cli",
+        "command": "1688cli products image <local-path-or-https-url> --limit <n> --output <new-path>.json",
+        "probe": "1688cli doctor --json; 1688cli capabilities --json"
+      },
+      "features": [
+        "read_only_platform_query",
+        "local_path_or_https_url",
+        "one_image_per_call",
+        "structured_json",
+        "source_provenance"
+      ],
+      "permissions": [
+        "read user image or 1688cli-returned image URL",
+        "read configured official 1688 AK",
+        "write a new JSON file"
+      ],
       "normalization": "Associate each response with the reference ID that produced the CLI call; do not merge distinct references without evidence.",
       "tested_date": "2026-09-28",
-      "evidence": ["On Codex/macOS, an HTTPS product image returned by keyword search was passed to 1688cli products image and produced three normalized rows."]
-    },
-    {
-      "capability_id": "sourcing.visual.batch-prepare",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research visual-batches <inventory-or-result.json> --output <new-visual-batches.json>", "probe": "1688cli capabilities --json"},
-      "features": ["fixed_max_ten_images", "offer_id_image_pairing", "title_free_visual_input", "structured_json"],
-      "permissions": ["read the complete task inventory", "write a new JSON file"],
-      "normalization": "Each batch contains at most ten items and exposes only offer_id and image_url; unusable image URLs remain separately traceable.",
-      "tested_date": "2026-09-29",
-      "evidence": ["Node test created 10/10/2 title-free visual batches from 23 products and isolated one unusable image."]
-    },
-    {
-      "capability_id": "sourcing.visual.materialize",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research visual-materialize <visual-batches.json> --output-dir <new-directory>", "probe": "1688cli capabilities --json"},
-      "features": ["network_read_only", "offer_id_local_path_pairing", "batch_directory", "structured_failures"],
-      "permissions": ["read scoped HTTPS product images", "create one new local directory"],
-      "normalization": "Use materialized.json to preserve each offer_id/image_url/local_path mapping and isolate failed downloads.",
-      "tested_date": "2026-09-29",
-      "evidence": ["Node test materialized a mocked JPEG into a new offer-id-named local file and wrote materialized.json without overwrite."]
-    },
-    {
-      "capability_id": "sourcing.image.inspect",
-      "status": "implemented",
-      "implementation": {"kind": "agent-native-vision", "discovery": "Use currently advertised Codex vision capabilities to inspect every item in one visual batch concurrently. A batch contains at most ten offer_id/image_url pairs. Keep the per-offer mapping and return CAPABILITY_UNAVAILABLE if all images cannot be inspected without title input."},
-      "features": ["batch_up_to_ten", "concurrent_image_inspection", "per_offer_result", "candidate_image_review", "visible_evidence_only", "reference_pairing"],
-      "permissions": ["inspect only task images"],
-      "normalization": "Return one record per offer with subject, visual tags, visible evidence, confidence, and status. Do not expose title, SKU, price, merchant, or search query until visual tagging and clustering are complete."
-    },
-    {
-      "capability_id": "sourcing.result.collect",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research collect <search-manifest.json> --output <new-inventory.json>", "probe": "1688cli capabilities --json"},
-      "features": ["local_read_only", "offer_id_deduplication", "all_search_provenance", "sku_price_observations", "coverage_counts"],
-      "permissions": ["read saved query JSON files", "write a new inventory JSON file"],
-      "normalization": "Use search_log and products unchanged as the complete source set for version 2 research results.",
-      "tested_date": "2026-09-28",
-      "evidence": ["Node test merges two overlapping searches into three unique offers while preserving four returned rows and SKU observations."]
-    },
-    {
-      "capability_id": "sourcing.visual.compile",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research visual-compile <visual-batches.json> --tag-dir <visual-tags> --output <new-catalog.json>", "probe": "1688cli capabilities --json"},
-      "features": ["complete_offer_coverage", "duplicate_rejection", "post_tag_clustering", "per_offer_cluster_id"],
-      "permissions": ["read task-local visual manifests and tags", "write one new catalog JSON"],
-      "normalization": "Reject missing or duplicate offers; preserve every per-image tag and assign one structural similarity cluster only after tagging.",
-      "tested_date": "2026-09-29",
-      "evidence": ["Node test compiled complete per-image tags and assigned multi-cavity and shallow-frying structural clusters after coverage validation."]
-    },
-    {
-      "capability_id": "sourcing.result.build",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research build <inventory.json> --context <analysis.json> --output <new-sourcing-result.json>", "probe": "1688cli capabilities --json"},
-      "features": ["complete_inventory_preservation", "offer_id_keyed_judgments", "versioned_result", "contract_validation"],
-      "permissions": ["read task inventory and analysis JSON files", "write a new sourcing result JSON file"],
-      "normalization": "Retain every inventory offer; assessments only annotate offers by ID. Accept only validated version 2 results.",
-      "tested_date": "2026-09-28",
-      "evidence": ["Node test retained two inventory offers while applying a cross-category judgment to one and rejected a false complete status."]
-    },
-    {
-      "capability_id": "sourcing.result.validate",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research validate <sourcing-result.json>", "probe": "1688cli --help"},
-      "features": ["local_read_only", "mode_specific_schema", "provenance_links", "structured_errors"],
-      "permissions": ["read the task result JSON"],
-      "normalization": "Accept only ok:true; on OUTPUT_CONTRACT_FAILED inspect issues[] and repair the local artifact.",
-      "tested_date": "2026-09-28",
-      "evidence": ["Node tests accepted exploratory and multi-image precise examples and rejected wrong-mode image input and orphan search provenance."]
-    },
-    {
-      "capability_id": "sourcing.report.viewmodel",
-      "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli research viewmodel <sourcing-result.json> --output <new-viewmodel.json>", "probe": "1688cli --help"},
-      "features": ["validated_source_json", "category_or_reference_views", "https_product_images", "source_provenance", "versioned_viewmodel"],
-      "permissions": ["read the task sourcing result", "write a new ViewModel JSON file"],
-      "normalization": "Produces compact-workbench@1.0 ViewModel with a summary, separate category/reference views, HTTPS product cards, and evidence view.",
-      "tested_date": "2026-09-28",
-      "evidence": ["On Codex/macOS, converted the validated 平底锅 sourcing result into a ViewModel with eight views and eleven HTTPS product cards; unit tests cover exploratory and precise grouping."]
-    },
-    {
-      "capability_id": "sourcing.report.html",
-      "status": "tested",
-      "implementation": {"kind": "nested-skill-and-stable-cli", "skill": "compact-commerce-ui", "command": "commerce-ui render --input <viewmodel.json> --output <new-report.html>; commerce-ui validate <report.html>", "probe": "commerce-ui version --json; commerce-ui templates list --json; commerce-ui schema --template compact-workbench"},
-      "features": ["exact_nested_skill_resolution", "versioned_template_contract", "remote_https_product_images", "new_html_output", "html_validation"],
-      "permissions": ["load the current compact-commerce-ui Skill", "read ViewModel JSON", "write a new HTML file", "browser may load HTTPS product images when report is viewed"],
-      "normalization": "Accept only a validated compact-workbench@1.0 report; retain HTML path, template-pack version, and validation output.",
-      "tested_date": "2026-09-28",
-      "evidence": ["On Codex/macOS, commerce-ui 1.2.5 rendered and validated the 平底锅 report: eight views, eleven remote HTTPS images, zero embedded assets. Chrome desktop and 390px mobile previews showed the category view, loaded product images, and no horizontal overflow on mobile."]
+      "evidence": [
+        "On Codex/macOS, an HTTPS product image returned by keyword search was passed to 1688cli products image and produced three normalized rows."
+      ]
     },
     {
       "capability_id": "sourcing.supplier.search",
       "status": "tested",
-      "implementation": {"kind": "stable-cli", "command": "1688cli suppliers search <query> --output <new-path>.json", "probe": "1688cli doctor --json"},
-      "features": ["read_only_platform_query", "structured_json", "source_provenance"],
-      "permissions": ["read configured official 1688 AK", "write a new JSON file"],
+      "implementation": {
+        "kind": "stable-cli",
+        "command": "1688cli suppliers search <query> --output <new-path>.json",
+        "probe": "1688cli doctor --json"
+      },
+      "features": [
+        "read_only_platform_query",
+        "structured_json",
+        "source_provenance"
+      ],
+      "permissions": [
+        "read configured official 1688 AK",
+        "write a new JSON file"
+      ],
       "normalization": "Read suppliers[] and match to product merchants only on direct identity evidence.",
       "tested_date": "2026-09-28",
-      "evidence": ["On Codex/macOS, 1688cli suppliers search 平底锅工厂 returned seven normalized supplier rows."]
+      "evidence": [
+        "On Codex/macOS, 1688cli suppliers search 平底锅工厂 returned seven normalized supplier rows."
+      ]
     }
   ]
 }

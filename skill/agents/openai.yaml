@@ -1,4 +1,4 @@
 interface:
-  display_name: "1688 找货"
-  short_description: "关键词与参考图寻找货源，保留完整商品证据并比较价格与供应商"
-  default_prompt: "使用 $1688cli 根据采购需求查找商品和供应商，生成可追溯的候选清单。"
+  display_name: "1688 原子查询"
+  short_description: "关键词、图片和链接查商品，查供应商，对已有结果执行明确筛选。"
+  default_prompt: "Use $1688cli to complete the requested 1688 task within its declared contract."
