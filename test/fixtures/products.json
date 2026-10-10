@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "kind": "products",
+  "products": [
+    { "offer_id": "1", "price": 19, "moq": 5, "sold_count": 30 },
+    { "offer_id": "2", "price": 80, "moq": 20, "sold_count": 100 },
+    { "offer_id": "3", "price": null, "moq": 1, "sold_count": 50 }
+  ]
+}

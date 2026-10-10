@@ -1,0 +1,55 @@
+{
+  "schema": "1688-sourcing-result",
+  "schema_version": "1.0.0",
+  "mode": "explore",
+  "status": "complete",
+  "request": {
+    "original_text": "帮我找一下平底锅产品",
+    "reference_images": [],
+    "hard_constraints": [],
+    "preferences": []
+  },
+  "search_log": [
+    {
+      "search_id": "q1",
+      "method": "text",
+      "input": "平底锅",
+      "reason": "宽词查看款式分布",
+      "status": "success",
+      "result_count": 1,
+      "raw_path": "q1.json"
+    }
+  ],
+  "products": [
+    {
+      "offer_id": "test-offer-1",
+      "title": "示例平底锅",
+      "url": "https://detail.1688.com/offer/test-offer-1.html",
+      "image_url": "",
+      "price": 30,
+      "sku_title": "示例规格",
+      "moq": 1,
+      "supplier_name": "示例商家",
+      "source_search_ids": ["q1"],
+      "assessment": "测试数据，仅用于校验结构"
+    }
+  ],
+  "mode_data": {
+    "clusters": [
+      {
+        "cluster_id": "basic",
+        "name": "基础款",
+        "distinguishing_cues": ["测试类别"],
+        "representative_offer_ids": ["test-offer-1"],
+        "search_terms_seen": ["平底锅"],
+        "next_search_options": ["早餐 平底锅"]
+      }
+    ],
+    "priority_cluster_ids": ["basic"]
+  },
+  "human_handoff": {
+    "questions": ["目标规格与采购量对应的阶梯价是多少？"],
+    "unverified": ["真实材质和交期"]
+  },
+  "stop_reason": "测试数据已覆盖输出结构"
+}
