@@ -18,7 +18,7 @@ try {
  const cli=path.join(root,'scripts/1688cli.mjs');
  const call=args=>JSON.parse(execFileSync(process.execPath,[cli,...args],{encoding:'utf8'}));
  assert.equal(call(['version']).version,META.version);
- assert.equal(call(['skill','source']).source,await fs.realpath(path.join(root,'skill')));
+ assert.equal(await fs.realpath(call(['skill','source']).source),await fs.realpath(path.join(root,'skill')));
  for(const agent of ['codex','sealseek','workbuddy']){
   const target=path.join(temp,agent,'1688cli');
   assert.equal(call(['skill','install','--agent',agent,'--path',target,'--mode','copy']).results[0].current,true);

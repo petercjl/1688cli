@@ -20,3 +20,12 @@ test('provider overrides and credential health do not disclose secret values',as
   assert.match(providerPaths({ALI1688_PRODUCT_SKILL_DIR:'/configured/provider'}).product,/configured/);
   const r=await akAvailable({ALI_1688_AK:'test-only-secret'});assert.equal(r.available,true);assert.equal(JSON.stringify(r).includes('test-only-secret'),false);
 });
+
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
+test('doctor returns nonzero for unavailable explicitly selected Python',async()=>{
+ const cli=fileURLToPath(new URL('../scripts/1688cli.mjs',import.meta.url));
+ let error;try{await promisify(execFile)(process.execPath,[cli,'doctor','--json'],{env:{...process.env,ALI1688_PYTHON:'1688-missing-python-test'},encoding:'utf8'});}catch(e){error=e;}
+ assert.equal(error.code,1);const result=JSON.parse(error.stdout);assert.equal(result.ok,false);assert.equal(result.python.available,false);
+});
